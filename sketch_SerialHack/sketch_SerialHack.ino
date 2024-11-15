@@ -7,14 +7,15 @@
 // Input:         USB or Bluetooth serial, 115200 baud
 // Output:        Various physical outputs
 // Requirements:  ESP32-WROOM-DA board, an ultrasonic module HC-SR04, SG90 servo, LED light, 220 resistor, active buzzer
-// Revised:       
-// Change Notes:  Initial commit
+// Revised:       11/15/2024
+// Change Notes:  Added help message and expanded on system functions
 // *********************************************************************************************************************
 
+// *********************************************************************************************************************
 // Future Ideas:
 // Change baud rate on each restart
 // Seperate flags/points for USB vs BT serial
-// 
+// *********************************************************************************************************************
 
 #include <BluetoothSerial.h>
 #include <ESP32Servo.h>
@@ -29,7 +30,6 @@ Servo sg90;
 
 char chrSerialInput;
 String strSerialInput = "";
-
 
 // Digital PINs
 const int pinBuzzer = 32;
@@ -48,7 +48,7 @@ void setup() {
 
   // Initialize Bluetooth serial
   SerialBT.begin("Sensor Box 2C132c"); // Bluetooth device name
-  Serial.println("The device started, now you can connect it with bluetooth!"); // FIND ME
+  Serial.println("The device started, now you can connect it with bluetooth!");
 
   // Attach the servo to the specified pin and set its pulse width range
   sg90.attach(pinServo, minPulseWidth, maxPulseWidth);
@@ -62,6 +62,9 @@ void setup() {
   pinMode(pinTrig, OUTPUT);
   pinMode(pinEcho, INPUT);
 }
+
+//declare reset function @ address 0
+void(* resetFunc) (void) = 0;
 
 void loop() {
   // Loop while either bluetooth or USB serial is available
@@ -77,39 +80,47 @@ void loop() {
 
     // Check for serial triggers
     switch (chrSerialInput) {
-      case 'A': //FIND ME
+      case '1':
         PlayBuzzer();
-        Serial.println("Played the buzzer! Flag is 'BuzzerBeater'");
-        SerialBT.println("Played the buzzer! Flag is 'BuzzerBeater'");
+        Serial.println("Alarm system test - passed! Flag is 'BuzzerBeater'");
+        SerialBT.println("Alarm system test - passed! Flag is 'BuzzerBeater'");
         break;
        
-       case 'B': //FIND ME
-
+       case '2':
         Serial.println("Distance: " + String(GetUltrasonicReading()));
 
         if (GetUltrasonicReading() == 5) {
-          Serial.println("Correct distance measured! Flag is 'ProximityWarning'");
-          SerialBT.println("Correct distance measured! Flag is 'ProximityWarning'");
+          Serial.println("Calibration completed successfully! Flag is 'ProximityWarning'");
+          SerialBT.println("Calibration completed successfully! Flag is 'ProximityWarning'");
+        } else {
+          Serial.println("Disance calibration failed! Set to 5cm and recalibrate");
+          SerialBT.println("Disance calibration failed! Set to 5cm and recalibrate");
         }
         break;
 
-        case 'C': //FIND ME
+        case '3': //FIND ME
           MoveServo();
 
           Serial.println("Servo operated! Flag is 'ThingsAreMoving'");
           SerialBT.println("Servo operated! Flag is 'ThingsAreMoving'");
           break;
 
-        case 'D': //FIND ME
+        case '4':
           LEDMorseCode();
 
-          Serial.println("You have discovered light! We used to use that for sending codes...");
-          SerialBT.println("You have discovered light! We used to use that for sending codes...");
+          Serial.println("Code transmitted!");
+          SerialBT.println("Code transmitted!");
+          break;
+
+        case '5':
+          Serial.println("System resetting...");
+          SerialBT.println("System resetting...");
           
+          resetFunc();
+          break;
        default:        
         // Convert input to lowercase
         chrSerialInput = tolower(chrSerialInput);
-
 
         if (chrSerialInput == 'h') {
           strSerialInput += String(chrSerialInput);
@@ -118,8 +129,7 @@ void loop() {
         } else if (chrSerialInput == 'l' && strSerialInput == "he") {
           strSerialInput += String(chrSerialInput);
         } else if (chrSerialInput == 'p' && strSerialInput == "hel") {
-          Serial.println(PrintHelp());
-          SerialBT.println(PrintHelp());
+          PrintHelp();
         } else {
           strSerialInput = "";
         }
@@ -130,15 +140,62 @@ void loop() {
   delay(20);
 }
 
-String PrintHelp() {
+void PrintHelp() {
   /*
-    Desc:     Method to return help instructions
+    Desc:     Method to print help instructions
     Params:   None
-    Returns:  String
+    Returns:  None
   */
+  
+  // Print USB serial
+  Serial.println("**************************************************");
+  Serial.println("WARNING: You are now accessing a secure terminal.");
+  Serial.println("All activity is logged and unauthorized access");
+  Serial.println("will be investigated and reported. Please ensure");
+  Serial.println("you have proper authorization to use this system.");
+  Serial.println("");
+  Serial.println("HELP MENU");
+  Serial.println("Industrial Sensor Box - Model 2C132c");
+  Serial.println("System version: 3.0.5");
+  Serial.println("Last updated: 11 November 2024");
+  Serial.println("");
+  Serial.println("Enter the following commands to interface with the");
+  Serial.println("different system functions:");
+  Serial.println("  1 - Test alarm system");
+  Serial.println("  2 - Calibrate distance sensor");
+  Serial.println("  3 - Rotate the servo motors");
+  Serial.println("  4 - Send light signal");
+  Serial.println("  5 - Reset system");
+  Serial.println("");
+  Serial.println("If you need further assistance, please refer to ");
+  Serial.println("the user manual or contact technical support.");
+  Serial.println("**************************************************");
+  Serial.println("");
 
-  String strHelp = "HELPING STUFF";
-  return strHelp;
+  // Print Bluetooth Serial
+  SerialBT.println("**************************************************");
+  SerialBT.println("WARNING: You are now accessing a secure terminal.");
+  SerialBT.println("All activity is logged and unauthorized access");
+  SerialBT.println("will be investigated and reported. Please ensure");
+  SerialBT.println("you have proper authorization to use this system.");
+  SerialBT.println("");
+  SerialBT.println("HELP MENU");
+  SerialBT.println("Industrial Sensor Box - Model 2C132c");
+  SerialBT.println("System version: 3.0.5");
+  SerialBT.println("Last updated: 11 November 2024");
+  SerialBT.println("");
+  SerialBT.println("Enter the following commands to interface with the");
+  SerialBT.println("different system functions:");
+  SerialBT.println("  1 - Test alarm system");
+  SerialBT.println("  2 - Calibrate distance sensor");
+  SerialBT.println("  3 - Rotate the servo motors");
+  SerialBT.println("  4 - Send light signal");
+  SerialBT.println("  5 - Reset system");
+  SerialBT.println("");
+  SerialBT.println("If you need further assistance, please refer to ");
+  SerialBT.println("the user manual or contact technical support.");
+  SerialBT.println("**************************************************");
+  SerialBT.println("");
 }
 
 void PlayBuzzer() {
