@@ -8,13 +8,14 @@
 // Output:        Various physical outputs
 // Requirements:  ESP32-WROOM-DA board, an ultrasonic module HC-SR04, SG90 servo, LED light, 220 resistor, active buzzer
 // Revised:       11/15/2024
-// Change Notes:  Added servo functions to "lock" and "unlock" the box
+// Change Notes:  Minor changes to output messages
 // *********************************************************************************************************************
 
 // *********************************************************************************************************************
 // Future Ideas:
 // Change baud rate on each restart
 // Seperate flags/points for USB vs BT serial
+// Timeout for BT?
 // *********************************************************************************************************************
 
 #include <BluetoothSerial.h>
@@ -28,6 +29,7 @@
 BluetoothSerial SerialBT;
 Servo sg90;
 
+int usReading = 0;
 char chrSerialInput;
 String strSerialInput = "";
 
@@ -81,24 +83,33 @@ void loop() {
     // Check for serial triggers
     switch (chrSerialInput) {
       case '1':
+        Serial.println("Testing alarm system...");
+        SerialBT.println("Testing alarm system...");
+
         PlayBuzzer();
+        
         Serial.println("Alarm system test - passed! Flag is 'BuzzerBeater'");
         SerialBT.println("Alarm system test - passed! Flag is 'BuzzerBeater'");
         break;
        
        case '2':
-        Serial.println("Distance: " + String(GetUltrasonicReading()));
+        usReading = GetUltrasonicReading();
+        
+        Serial.println("Distance: " + String(usReading));
 
-        if (GetUltrasonicReading() == 5) {
+        if (usReading == 5) {
           Serial.println("Calibration completed successfully! Flag is 'ProximityWarning'");
           SerialBT.println("Calibration completed successfully! Flag is 'ProximityWarning'");
         } else {
-          Serial.println("Disance calibration failed! Set to 5cm and recalibrate");
-          SerialBT.println("Disance calibration failed! Set to 5cm and recalibrate");
+          Serial.println("Disance calibration failed at " + String(usReading) + "cm! Set to 5cm and recalibrate");
+          SerialBT.println("Disance calibration failed at " + String(usReading) + "cm! Set to 5cm and recalibrate");
         }
         break;
 
         case '3':
+          Serial.println("Flashing code...");
+          SerialBT.println("Flashing code...");
+          
           LEDMorseCode();
 
           Serial.println("Code transmitted!");
