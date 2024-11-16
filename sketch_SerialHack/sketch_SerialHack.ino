@@ -8,7 +8,7 @@
 // Output:        Various physical outputs
 // Requirements:  ESP32-WROOM-DA board, an ultrasonic module HC-SR04, SG90 servo, LED light, 220 resistor, active buzzer
 // Revised:       11/15/2024
-// Change Notes:  Added help message and expanded on system functions
+// Change Notes:  Added servo functions to "lock" and "unlock" the box
 // *********************************************************************************************************************
 
 // *********************************************************************************************************************
@@ -98,26 +98,40 @@ void loop() {
         }
         break;
 
-        case '3': //FIND ME
-          MoveServo();
-
-          Serial.println("Servo operated! Flag is 'ThingsAreMoving'");
-          SerialBT.println("Servo operated! Flag is 'ThingsAreMoving'");
-          break;
-
-        case '4':
+        case '3':
           LEDMorseCode();
 
           Serial.println("Code transmitted!");
           SerialBT.println("Code transmitted!");
           break;
+        
+        case '4':
+          Serial.println("Unlocking...");
+          SerialBT.println("Unlocking...");
+        
+          UnlockServo();
+
+          Serial.println("Box unlocked!");
+          SerialBT.println("Box unlocked!");
+          break;
 
         case '5':
+          Serial.println("Locking...");
+          SerialBT.println("Locking...");
+          
+          LockServo();
+
+          Serial.println("Box locked!");
+          SerialBT.println("Box locked!");
+          break;
+
+        case '0':
           Serial.println("System resetting...");
           SerialBT.println("System resetting...");
           
           resetFunc();
           break;
+       
        default:        
         // Convert input to lowercase
         chrSerialInput = tolower(chrSerialInput);
@@ -163,9 +177,10 @@ void PrintHelp() {
   Serial.println("different system functions:");
   Serial.println("  1 - Test alarm system");
   Serial.println("  2 - Calibrate distance sensor");
-  Serial.println("  3 - Rotate the servo motors");
-  Serial.println("  4 - Send light signal");
-  Serial.println("  5 - Reset system");
+  Serial.println("  3 - Send light signal");
+  Serial.println("  4 - Unlock the box");
+  Serial.println("  5 - Lock the box");
+  Serial.println("  0 - Reset system");
   Serial.println("");
   Serial.println("If you need further assistance, please refer to ");
   Serial.println("the user manual or contact technical support.");
@@ -188,9 +203,10 @@ void PrintHelp() {
   SerialBT.println("different system functions:");
   SerialBT.println("  1 - Test alarm system");
   SerialBT.println("  2 - Calibrate distance sensor");
-  SerialBT.println("  3 - Rotate the servo motors");
-  SerialBT.println("  4 - Send light signal");
-  SerialBT.println("  5 - Reset system");
+  SerialBT.println("  3 - Send light signal");
+  SerialBT.println("  4 - Unlock the box");
+  SerialBT.println("  5 - Lock the box");
+  SerialBT.println("  0 - Reset system");
   SerialBT.println("");
   SerialBT.println("If you need further assistance, please refer to ");
   SerialBT.println("the user manual or contact technical support.");
@@ -235,22 +251,30 @@ int GetUltrasonicReading() {
   return (int) fltDistance;
 }
 
-void MoveServo() {
+void UnlockServo() {
   /*
-    Desc:     This method moves the servo motor
+    Desc:     This method moves the servo motor to "unlock" the box
+    Params:   None
+    Returns:  None
+  */
+
+  // Rotate the servo from 180 to 0 degrees
+  for (int angle = 180; angle >= 0; angle--) {
+    int pulseWidth = map(angle, 0, 180, minPulseWidth, maxPulseWidth);
+    sg90.writeMicroseconds(pulseWidth);
+    delay(15);
+  }
+}
+
+void LockServo() {
+  /*
+    Desc:     This method moves the servo motor to "lock" the box
     Params:   None
     Returns:  None
   */
   
   // Rotate the servo from 0 to 180 degrees
   for (int angle = 0; angle <= 180; angle++) {
-    int pulseWidth = map(angle, 0, 180, minPulseWidth, maxPulseWidth);
-    sg90.writeMicroseconds(pulseWidth);
-    delay(15);
-  }
-
-  // Rotate the servo from 180 to 0 degrees
-  for (int angle = 180; angle >= 0; angle--) {
     int pulseWidth = map(angle, 0, 180, minPulseWidth, maxPulseWidth);
     sg90.writeMicroseconds(pulseWidth);
     delay(15);
